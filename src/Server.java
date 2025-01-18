@@ -102,20 +102,32 @@ public class Server {
         return null;
     }
 
-    private String readMessage(String username, int messageID) {
+    private String readMessage(String username, int messageId) {
         String error = "Message ID does not exist";
 
         Account account = findAccountFromUsername(username);
         if (account == null)
             return error;
 
-        Message message = account.getMessageFromId(messageID);
+        Message message = account.getMessageFromId(messageId);
         if (message == null)
             return error;
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("(").append(message.getSender()).append(") ").append(message.getBody());
         return stringBuilder.toString();
+    }
+
+    private String deleteMessage(String username, int messageId) {
+        String error = "Message does not exist";
+
+        Account account = findAccountFromUsername(username);
+        if (account == null)
+            return error;
+
+        if (account.deleteMessage(messageId))
+            return "OK";
+        return error;
     }
 
     private static class ClientHandler implements Runnable {

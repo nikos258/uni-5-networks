@@ -37,6 +37,14 @@ public class Account {
         }
         return null;
     }
+
+    public boolean deleteMessage(int id) {
+        Message message = getMessageFromId(id);
+        if (message == null)
+            return false;
+        messageBox.remove(message);
+        return true;
+    }
     public void foo() {
         System.out.println(messageBox.get(0).getBody());
     }
