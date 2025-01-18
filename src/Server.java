@@ -1,14 +1,15 @@
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.Hashtable;
 import java.io.*;
 import java.net.*;
 
 public class Server {
-    private List<Account> accountList = new ArrayList<>();
+    private List<Account> accountList = Collections.synchronizedList(new ArrayList<>());
     private static final SecureRandom secureRandom = new SecureRandom();
+    private int nextMessageId = 1;
 
     public static void main(String[] args) {
         int port = 5000; //TODO change port to args
@@ -75,7 +76,9 @@ public class Server {
     private String showAccounts() {
         StringBuilder response = new StringBuilder();
 
+        int i = 1;
         for (Account account: accountList) {
+            response.append(i++).append(". ");
             response.append(account.getUsername());
             response.append("\n");
         }
@@ -83,15 +86,36 @@ public class Server {
         return response.toString();
     }
 
-    private String sendMessage(String sender, String recipient, String message_body) {
+    private synchronized String sendMessage(String sender, String recipient, String message_body) {
         if (!usernameExists(recipient))
             return "User does not exist";
 
-        Message message = new Message(sender, recipient, message_body);
+        Message message = new Message(nextMessageId++, sender, recipient, message_body);
         Account recipientAccount = findAccountFromUsername(recipient);
         assert recipientAccount != null;
         recipientAccount.addToMessageBox(message);
         return "OK";
+    }
+
+    private String showInbox(String username) {
+        Account recipientAccount = findAccountFromUsername(username);
+        return null;
+    }
+
+    private String readMessage(String username, int messageID) {
+        String error = "Message ID does not exist";
+
+        Account account = findAccountFromUsername(username);
+        if (account == null)
+            return error;
+
+        Message message = account.getMessageFromId(messageID);
+        if (message == null)
+            return error;
+
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("(").append(message.getSender()).append(") ").append(message.getBody());
+        return stringBuilder.toString();
     }
 
     private static class ClientHandler implements Runnable {
