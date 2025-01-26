@@ -48,7 +48,7 @@ public class Account {
     public String getAllMessages(){
         StringBuilder inbox = new StringBuilder();
         for (Message message : messageBox) {
-            inbox.append(message.id).append(" from: ").append(message.getSender());
+            inbox.append(message.id).append(". from: ").append(message.getSender());
             if (message.getIsRead())
                 inbox.append("*");
             inbox.append("\n");

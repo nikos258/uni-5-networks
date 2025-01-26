@@ -59,8 +59,12 @@ public class Server {
 
                 String response = handleRequest(request);
 
-                System.out.println(response); //todo: del
-
+//                System.out.println(response); //todo: del
+                String[] response_lines = response.split("\n");
+                for (String responseLine : response_lines) {
+                out.println(responseLine);
+                System.out.println(responseLine);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -68,35 +72,50 @@ public class Server {
         }
 
         private String handleRequest(String request) {
-            String[] parts = request.split(" ");
-            int fn_id = Integer.parseInt(parts[0]);
-            String response = null;
+            String response = "Error";
 
-            if (fn_id == 1) {
-                String username = parts[1];
-                response = createAccount(username);
-            } else {
-                int authtoken = Integer.parseInt(parts[1]);
-                if (! authTokenExists(authtoken))
-                    response = "Invalid Auth Token";
+            try {
+                String[] parts = request.split(" ");
+                int fn_id = Integer.parseInt(parts[0]);
 
-                switch (fn_id) {
-                    case 2:
-                        response = showAccounts();
-                        break;
-                    case 3:
-                        StringBuilder message = new StringBuilder();
-                        for (int i=3; i < parts.length; i++) {
-                            message.append(parts[i]);
-                        }
-                        response = sendMessage(findAccountFromAuthToken(authtoken).getUsername(), parts[2], message.toString());
-                        break;
-                    case 4:
-                        response = showInbox(findAccountFromAuthToken(authtoken).getUsername()); //todo make while loop
+                if (fn_id == 1) {
+                    String username = parts[1];
+                    response = createAccount(username);
+                } else {
+                    int authtoken = Integer.parseInt(parts[1]);
+                    if (!authTokenExists(authtoken))
+                        response = "Invalid Auth Token";
 
+                    switch (fn_id) {
+                        case 2:
+                            response = showAccounts();
+                            break;
+                        case 3:
+                            StringBuilder message = new StringBuilder();
+                            for (int i = 3; i < parts.length; i++) {
+                                message.append(parts[i]).append(" ");
+                            }
+                            if (! message.isEmpty())
+                                message.deleteCharAt(message.length()-1);
+                            String recipient = parts[2];
+                            response = sendMessage(findAccountFromAuthtoken(authtoken).getUsername(), recipient, message.toString());
+                            break;
+                        case 4:
+                            response = showInbox(authtoken); //todo make while loop
+                            break;
+                        case 5:
+                            int message_id = Integer.parseInt(parts[2]);
+                            response = readMessage(authtoken, message_id);
+                            break;
+                        case 6:
+                            int id = Integer.parseInt(parts[2]);
+                            response = deleteMessage(authtoken, id);
+                            break;
+                    }
                 }
+            } catch (ArrayIndexOutOfBoundsException e){
+                response = "Wrong arguments";
             }
-
             return response;
         }
 
@@ -116,7 +135,7 @@ public class Server {
             return false;
         }
 
-        private Account findAccountFromAuthToken(int authToken) {
+        private Account findAccountFromAuthtoken(int authToken) {
             for (Account account: accountList) {
                 if (account.getAuthToken() == authToken)
                     return account;
@@ -175,15 +194,15 @@ public class Server {
             return "OK";
         }
 
-        private String showInbox(String username) {
-            Account account = findAccountFromUsername(username);
+        private String showInbox(int authtoken) {
+            Account account = findAccountFromAuthtoken(authtoken);
             return account.getAllMessages();
         }
 
-        private String readMessage(String username, int messageId) {
+        private String readMessage(int authtoken, int messageId) {
             String error = "Message ID does not exist";
 
-            Account account = findAccountFromUsername(username);
+            Account account = findAccountFromAuthtoken(authtoken);
             if (account == null)
                 return error;
 
@@ -191,15 +210,14 @@ public class Server {
             if (message == null)
                 return error;
 
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("(").append(message.getSender()).append(") ").append(message.getBody());
-            return stringBuilder.toString();
+            message.setToRead();
+            return "(" + message.getSender() + ") " + message.getBody();
         }
 
-        private String deleteMessage(String username, int messageId) {
+        private String deleteMessage(int authtoken, int messageId) {
             String error = "Message does not exist";
 
-            Account account = findAccountFromUsername(username);
+            Account account = findAccountFromAuthtoken(authtoken);
             if (account == null)
                 return error;
 

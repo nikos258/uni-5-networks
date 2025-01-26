@@ -20,4 +20,7 @@ public class Message {
     public boolean getIsRead() {
         return isRead;
     }
+    public void setToRead() {
+        isRead = true;
+    }
 }
