@@ -4,8 +4,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Account {
-    private String username;
-    private int authToken;
+    private final String username;
+    private final int authToken;
     private List<Message> messageBox;
 
     public Account(String username, int authToken) {
@@ -44,6 +44,18 @@ public class Account {
             return false;
         messageBox.remove(message);
         return true;
+    }
+    public String getAllMessages(){
+        StringBuilder inbox = new StringBuilder();
+        for (Message message : messageBox) {
+            inbox.append(message.id).append(" from: ").append(message.getSender());
+            if (message.getIsRead())
+                inbox.append("*");
+            inbox.append("\n");
+        }
+        if (!inbox.isEmpty())
+            inbox.deleteCharAt(inbox.length()-1);
+        return inbox.toString();
     }
     public void foo() {
         System.out.println(messageBox.get(0).getBody());

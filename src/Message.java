@@ -17,4 +17,7 @@ public class Message {
     public String getBody() {
         return body;
     }
+    public boolean getIsRead() {
+        return isRead;
+    }
 }
