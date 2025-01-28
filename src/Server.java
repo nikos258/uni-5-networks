@@ -23,19 +23,8 @@ public class Server {
      */
     private static int nextMessageId = 1;
 
-    private static void initialise() { //todo del
-        accountList.add(new Account("user1", 1));
-        accountList.add(new Account("user2", 2));
-        accountList.add(new Account("user3", 3));
-
-        ClientHandler clientHandler = new ClientHandler(new Socket());
-        clientHandler.sendMessage("user1", "user2", "HELLO MY FRIEND");
-        clientHandler.sendMessage("user1", "user2", "HEY ALL, SCOTT HERE");
-    }
 
     public static void main(String[] args) {
-        initialise();
-        System.out.println("Initialise"); //todo: del
         int port = Integer.parseInt(args[0]);
 
         ServerSocket server = null;
@@ -44,7 +33,6 @@ public class Server {
 
             while (true) {
                 Socket client = server.accept();
-                System.out.println("New client connected " + client.getInetAddress().getHostAddress());//todo: del
 
                 ClientHandler clientSock = new ClientHandler(client);
                 new Thread(clientSock).start();
@@ -82,17 +70,9 @@ public class Server {
             {
                 String request = in.readLine();
 
-                System.out.println(request); //todo: del
-
                 String response = handleRequest(request);
 
-                System.out.print(response); //todo: del
                 out.write(response);
-//                String[] response_lines = response.split("\n");
-//                for (String responseLine : response_lines) {
-//                out.println(responseLine);
-//                System.out.println(responseLine);
-//                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -119,8 +99,10 @@ public class Server {
                     response = createAccount(username);
                 } else {
                     int authtoken = Integer.parseInt(parts[1]);
-                    if (!authTokenExists(authtoken))
+                    if (!authTokenExists(authtoken)) {
                         response = "Invalid Auth Token";
+                        return response;
+                    }
 
                     switch (fn_id) {
                         case 2:
@@ -137,7 +119,7 @@ public class Server {
                             response = sendMessage(findAccountFromAuthtoken(authtoken).getUsername(), recipient, message.toString());
                             break;
                         case 4:
-                            response = showInbox(authtoken); //todo make while loop
+                            response = showInbox(authtoken);
                             break;
                         case 5:
                             int message_id = Integer.parseInt(parts[2]);
@@ -147,6 +129,8 @@ public class Server {
                             int id = Integer.parseInt(parts[2]);
                             response = deleteMessage(authtoken, id);
                             break;
+                        default:
+                            response = "Wrong arguments";
                     }
                 }
             } catch (ArrayIndexOutOfBoundsException e){
@@ -270,12 +254,13 @@ public class Server {
         /**
          * Implements the fourth function (show inbox). Uses the getAllMessages method of the Account class.
          * @param authToken the authToken
-         * @return a string with all the messages in the messageBox of the account
+         * @return a string with all the messages in the messageBox of the account or "Invalid Auth Token" if the account is null
          */
         private String showInbox(int authToken) {
             Account account = findAccountFromAuthtoken(authToken);
-            assert account != null;
-            return account.getAllMessages();
+            if (account != null)
+                return account.getAllMessages();
+            return "Invalid Auth Token";
         }
 
         /**
@@ -317,6 +302,15 @@ public class Server {
             if (account.deleteMessage(message_id))
                 return "OK";
             return error;
+        }
+        private static void initialise() {
+            accountList.add(new Account("user1", 1));
+            accountList.add(new Account("user2", 2));
+            accountList.add(new Account("user3", 3));
+
+            ClientHandler clientHandler = new ClientHandler(new Socket());
+            clientHandler.sendMessage("user1", "user2", "HELLO MY FRIEND");
+            clientHandler.sendMessage("user1", "user2", "HEY ALL, SCOTT HERE");
         }
     }
 }
